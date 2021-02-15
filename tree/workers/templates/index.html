@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Title</title>
+        <!-- CSS -->
+        <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-vue.css' %}">
+        <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
+        <!--  JS  -->
+        <script src="{% static 'js/vue.js' %}"></script>
+        <script src="{% static 'js/bootstrap-vue.min.js' %}"></script>
+        <script src="{% static 'js/axios.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap-vue-icons.min.js' %}"></script>
+
+        <script src="{% static 'js/tree-item.js' %}"></script>
+    {% endblock %}
+</head>
+
+<body>
+    {% csrf_token %}
+    <main>
+        {% block main %}
+            
+        {% endblock %}
+        <b-modal id="change-worker-data" size="lg" button-size="sm" title="Изменение данных сотрудника" 
+        @ok="changeWorkerDataOk">
+            <div class="row">
+                <div class="col">
+                    <b-img :src="'/media/' + editData.photo" fluid alt="Fluid image"></b-img>
+                </div>
+                <div class="col-8">
+                    <label for="name-Changed">Ф.И.О.:</label>
+                    <b-form-input id="name-Changed" type="string" 
+                    v-model="editData.name"
+                    ></b-form-input>
+                    
+                    <label for="position-Changed">должность:</label>
+                    <b-form-input id="position-Changed" type="string"
+                    v-model="editData.position"
+                    ></b-form-input>
+                    <label for="salary-Changed">заработная плата:</label>
+                    <b-form-input id="salary-Changed" type="number"
+                    v-model="editData.salary"
+                    ></b-form-input>
+                    <label for="startdate-Changed">дата приёма на работу:</label>
+                    <b-form-datepicker id="startdate-Changed" 
+                    :date-format-options="{ year: 'numeric', month: 'numeric', day: 'numeric' }"
+                    v-model="editData.start_date"
+                    ></b-form-datepicker>
+                </div>
+            </div>
+        </b-modal>
+    </main>
+    
+    {% block script %}
+
+    {% endblock %}
+</body>
+

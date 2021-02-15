@@ -1,0 +1,110 @@
+{% extends "index.html" %}
+
+{% block main %}
+    <div class="container-fluid">
+        <div class="row justify-content-end">
+            <div class="col-2">
+                <a href="{% url 'index_v2' %}">index версии 2</a>
+            </div>
+        </div>
+        <div class="row">
+            <div v-if="loading">
+                Загрузка ....            
+            </div>
+            <div v-else>
+                <tree-item
+                v-for="(child, index) in treeWorkers"
+                :item="child"
+                @changeclick="showchangeform($event)"
+                @deleteclick="deleteitem($event)"
+                ></tree-item>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+    
+{% block script %}
+{{ serverUrl | json_script:"serverUrl" }}
+
+<script>
+    var vm = new Vue({
+        el: "main",
+        delimiters: ["[[", "]]"],
+        data: {
+            treeWorkers: [],
+            serverUrl: "",
+            loading: true,
+            editData: {name: "", position: "", salary: "", start_date: "", photo: ""}
+        },
+        methods: {
+            showchangeform(inputitem) {
+                // Показ модальной формы с данными сотрудника
+                Object.assign(this.editData, inputitem)
+                // Очистка массива children для изменяемой ноды, 
+                // что-бы не передавать лишние данные в django
+                this.editData.children = []
+                this.$bvModal.show("change-worker-data")
+            },
+            deleteitem(inputitem) {
+                console.log("delete", inputitem)
+                axios.post(this.serverUrl + "delete_node/", inputitem,
+                    {headers: {
+                        "X-CSRFToken": document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                        // Это хеадер нужен для обработки django-функции is_ajax !!!
+                        "X-Requested-With": "XMLHttpRequest"
+                    }})
+                        .then((response) => {
+                            console.log("response", response)
+                            location.reload()
+                        })
+                        .catch(function (error) {
+                            console.log("error", error)
+                        })
+            },
+            changeWorkerDataOk() {
+                // Нажатие "ОК" модальной формы с данными сотрудника
+                axios.post(this.serverUrl + "change_node/", this.editData,
+                    {headers: {
+                        "X-CSRFToken": document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                        // Следующий хеадер нужен для правильной обработки django-функции "is_ajax" !!!
+                        "X-Requested-With": "XMLHttpRequest"
+                    }})
+                        .then((response) => {
+                            console.log("response", response)
+                            if (response.data.state === "ok"){
+                                location.reload() 
+                            }
+                            else {
+                                window.alert("Ошибка при изменении данных: "+response.data.exception);
+                            }
+                        })
+                        .catch(function (error) {
+                            console.log("error", error)
+                        })
+            }
+        },
+            
+        mounted() {
+            this.serverUrl = JSON.parse(document.querySelector('#serverUrl').textContent)
+
+            axios.post(this.serverUrl + "get_root_nodes/", {},
+                    {headers: {
+                        "X-CSRFToken": document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                        // Это хеадер нужен для обработки django-функции is_ajax !!!
+                        "X-Requested-With": "XMLHttpRequest"
+                    }}, {
+                        timeout: 1000
+                    })
+                        .then((response) => {
+                            this.treeWorkers = response.data.nodes.slice()
+                            console.log(this.treeWorkers)
+
+                            this.loading = false
+                        })
+                        .catch(function (error) {
+                            console.log("error", error)
+                        })
+        }
+    })
+</script>
+{% endblock %}
